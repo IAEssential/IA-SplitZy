@@ -1,0 +1,44 @@
+
+name: Build IA Split-Zy APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Extract app source
+        run: |
+          mkdir -p /tmp/ia_splitzy_src
+          unzip -o IA_SplitZy_Android_CloudBuild.zip -d /tmp/ia_splitzy_src
+          cp /tmp/ia_splitzy_src/pubspec.yaml .
+          mkdir -p lib
+          cp /tmp/ia_splitzy_src/lib/main.dart lib/main.dart
+
+      - name: Generate Android project
+        run: flutter create --platforms=android --project-name ia_splitzy --org com.iaessential .
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: IA-SplitZy-APK
+          path: build/app/outputs/flutter-apk/app-debug.apk
